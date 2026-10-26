@@ -16,7 +16,10 @@ public class PlayerHealth : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
     }
 
-    void Update() => HandleDeath();
+    void Update()
+    {
+        HandleDeath();
+    }
 
     void HandleDeath()
     {
