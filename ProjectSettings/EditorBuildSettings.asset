@@ -6,11 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Scene/_Bootstrap.unity
+    path: Assets/to-be-deprecated/_Bootstrap.unity
     guid: 5f103d43d059fea46b0bbc67212a81f2
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scene/_Test.unity
     guid: 45540096536f5694387daed59b038872
+  - enabled: 1
+    path: Assets/Scene/Scene.unity
+    guid: 3e22bdb7769b0fb4892ec563f9a488f3
   - enabled: 1
     path: Assets/to-be-deprecated/Level 0/Main_Menu.unity
     guid: 375720926b347d24d8ab10ac859bbae3
