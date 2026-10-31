@@ -24,7 +24,7 @@ public class Player : MonoBehaviour
 
     [Header("Collision Settings")]
     [SerializeField] LayerMask groundMask;
-    [SerializeField] float maxSlopeAngle = 50f; // Steeper than this counts as a wall
+    [SerializeField] float maxSlopeAngle = 50f;
     [SerializeField] float groundSnapDistance = 0.3f; // How far down we stick to the ground when walking downhill
 
     const float Skin = 0.01f; // Small gap between player and colliders
@@ -82,7 +82,7 @@ public class Player : MonoBehaviour
     {
         float dt = Time.fixedDeltaTime;
 
-        ResolveOverlaps();
+        //ResolveOverlaps();
 
         // JUMP
         if (state.grounded) coyoteTimer = coyoteTime;
@@ -107,14 +107,15 @@ public class Player : MonoBehaviour
 
         // COLLISION
         bool wasGrounded = state.grounded;
-        // Only a hit while falling means floor; a hit while rising is a ceiling
-        state.grounded = hitVertical && velocityY < 0f;
+        // Only a hit while falling means floor; a hit while rising is a ceiling.
+        // Being held up by an edge or corner doesn't count: there must be ground under our middle.
+        state.grounded = hitVertical && velocityY < 0f && HasGroundBelow();
         if (hitVertical) velocityY = 0f;
 
         // Walking downhill leaves us floating a little each step; stick back onto the ground
         if (wasGrounded && !state.grounded && velocityY <= 0f && SnapToGround())
         {
-            state.grounded = true;
+            state.grounded = HasGroundBelow();
             velocityY = 0f;
         }
     }
@@ -134,7 +135,9 @@ public class Player : MonoBehaviour
         }
 
         // Go only as far as the closest hit, minus the skin gap
-        float travel = Mathf.Clamp(hit.distance - Skin, 0f, distance);
+        // Hitting a surface at an angle needs a bigger step back to keep the full skin gap from it
+        float skinAlongMove = Skin / Mathf.Max(-Vector2.Dot(direction, hit.normal), 0.1f);
+        float travel = Mathf.Clamp(hit.distance - skinAlongMove, 0f, distance);
         rb.position += direction * travel;
 
         // Walked into a slope: spend the rest of the move going up along its surface
@@ -166,6 +169,28 @@ public class Player : MonoBehaviour
 
         rb.position += Vector2.down * Mathf.Max(0f, hit.distance - Skin);
         return true;
+    }
+
+    // Is there walkable ground right under the middle of our feet?
+    // A ray hits the real face of the ground, so an edge or corner touching the side of our round bottom can't fool it.
+    bool HasGroundBelow()
+    {
+        Bounds bounds = bodyCollider.bounds;
+        // Start a little inside our collider, so the ray never begins below the ground
+        Vector2 origin = new(bounds.center.x, bounds.min.y + 0.1f);
+
+        // Standing on the steepest walkable slope, the ground under our middle is this far below our lowest point
+        float radius = bounds.extents.x;
+        float slopeDrop = radius * (1f / Mathf.Cos(maxSlopeAngle * Mathf.Deg2Rad) - 1f);
+        float reach = 0.1f + slopeDrop + 2f * Skin;
+
+        int count = Physics2D.Raycast(origin, Vector2.down, groundFilter, hits, reach);
+        for (int i = 0; i < count; i++)
+        {
+            if (hits[i].rigidbody == rb) continue; // Our own collider
+            return IsWalkable(hits[i].normal);
+        }
+        return false;
     }
 
     // Casts can't see out of a collider we're already inside, so every Move would be blocked.
