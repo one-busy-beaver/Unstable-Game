@@ -1,5 +1,9 @@
 # Unstable — Refactor Checklist
 
+i'm going to implement crotching, pole climbing exactly at rain world, wall bouncing, water like rain world watcher, swim like rain world / gris
+
+later i will add weapon, attacks, items, how to hold two items at once and store multiple items in inventory like animal well
+
 ## 1. Unified ID System
 
 - [ ] Replace `CollectID` enum, `SessionID` SO, `EventID` enum with one `GameID : ScriptableObject`
